@@ -30,6 +30,8 @@ A Ruby wrapper for the ScraperWiki API.
     >> api.scraper_usersearch searchquery: 'search terms'
     => [{"username"=>"johndoe", "profilename"=>"John Doe", "date_joined"=>...}]
 
+Thorough documentation at [RubyDoc.info](http://rdoc.info/gems/scraperwiki-api/ScraperWiki/API).
+
 ## Bugs? Questions?
 
 Unbreakable's main repository is on GitHub: [http://github.com/opennorth/scraperwiki-api-ruby](http://github.com/opennorth/scraperwiki-api-ruby), where your contributions, forks, bug reports, feature requests, and feedback are greatly welcomed.
