@@ -34,6 +34,6 @@ Thorough documentation at [RubyDoc.info](http://rdoc.info/gems/scraperwiki-api/S
 
 ## Bugs? Questions?
 
-Unbreakable's main repository is on GitHub: [http://github.com/opennorth/scraperwiki-api-ruby](http://github.com/opennorth/scraperwiki-api-ruby), where your contributions, forks, bug reports, feature requests, and feedback are greatly welcomed.
+This gem's main repository is on GitHub: [http://github.com/opennorth/scraperwiki-api-ruby](http://github.com/opennorth/scraperwiki-api-ruby), where your contributions, forks, bug reports, feature requests, and feedback are greatly welcomed.
 
 Copyright (c) 2011 Open North Inc., released under the MIT license
