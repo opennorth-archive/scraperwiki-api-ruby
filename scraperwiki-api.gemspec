@@ -8,8 +8,9 @@ Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Open North"]
   s.email       = ["info@opennorth.ca"]
-  s.homepage    = "http://github.com/opennorth/scraperwiki-api"
-  s.summary     = %q{A Ruby wrapper for the ScraperWiki API}
+  s.homepage    = "http://github.com/opennorth/scraperwiki-api-ruby"
+  s.summary     = %q{The ScraperWiki API Ruby Gem}
+  s.description = %q{A Ruby wrapper for the ScraperWiki API}
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
