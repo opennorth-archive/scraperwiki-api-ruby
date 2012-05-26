@@ -154,6 +154,7 @@ module ScraperWiki
     # @option opts [String] :quietfields "|"-delimited list of fields to exclude
     #   from the output. Must be a subset of 'code|runevents|datasummary|userroles|history'
     #
+    # @note Returns an array although the array seems to always have only one item
     # @note The +tags+ field seems to always be an empty array
     # @note The query string parameter is +name+, not +shortname+
     #   {https://scraperwiki.com/docs/api#getinfo as documented}
@@ -192,6 +193,7 @@ module ScraperWiki
     # @param [Hash] opts optional arguments
     # @option opts [String] runid a run ID
     #
+    # @note Returns an array although the array seems to always have only one item
     # @note The query string parameter is +name+, not +shortname+
     #   {https://scraperwiki.com/docs/api#getinfo as documented}
     def scraper_getruninfo(shortname, opts = {})
@@ -226,6 +228,7 @@ module ScraperWiki
     #
     # @param [String] username a username
     #
+    # @note Returns an array although the array seems to always have only one item
     # @note The date joined field is +date_joined+ (with underscore) on
     #   {#scraper_usersearch}
     def scraper_getuserinfo(username)
@@ -263,7 +266,7 @@ module ScraperWiki
     #
     #     [
     #       {
-    #         "username": "1234567",
+    #         "username": "johndoe",
     #         "profilename": "John Doe",
     #         "date_joined": "1970-01-01T00:00:00"
     #       },
