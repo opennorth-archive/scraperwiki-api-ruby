@@ -22,7 +22,7 @@ class ScraperWiki::API
       it 'should return a non-empty array containing a single hash' do
         response = @api.scraper_getinfo EXAMPLE_SHORTNAME
         response.should be_an(Array)
-        response.size.should == 1
+        response.should have(1).item
         response.first.should be_a(Hash)
       end
 
@@ -36,10 +36,10 @@ class ScraperWiki::API
 
       it 'should respect the :history_start_date argument' do
         bare = @api.scraper_getinfo(EXAMPLE_SHORTNAME).first
-        bare['history'].size.should be > 1
+        bare['history'].should have_at_least(2).items
         history_start_date = bare['history'][0]['date'][0..9]
         result = @api.scraper_getinfo(EXAMPLE_SHORTNAME, history_start_date: history_start_date).first
-        result['history'].size.should == 1
+        result['history'].should have(1).item
       end
 
       it 'should respect the :quietfields argument (as an array)' do
@@ -61,7 +61,7 @@ class ScraperWiki::API
       it 'should return a non-empty array containing a single hash' do
         response = @api.scraper_getruninfo EXAMPLE_SHORTNAME
         response.should be_an(Array)
-        response.size.should == 1
+        response.should have(1).item
         response.first.should be_a(Hash)
       end
 
@@ -78,7 +78,7 @@ class ScraperWiki::API
       it 'should return a non-empty array containing a single hash' do
         response = @api.scraper_getuserinfo EXAMPLE_USERNAME
         response.should be_an(Array)
-        response.size.should == 1
+        response.should have(1).item
         response.first.should be_a(Hash)
       end
     end
@@ -87,7 +87,7 @@ class ScraperWiki::API
       it 'should return a non-empty array of hashes' do
         response = @api.scraper_search
         response.should be_an(Array)
-        response.size.should_not be_zero
+        response.should have_at_least(1).item
         response.first.should be_a(Hash)
       end
 
@@ -98,7 +98,7 @@ class ScraperWiki::API
       end
 
       it 'should respect the :maxrows argument' do
-        @api.scraper_search(maxrows: 1).size.should == 1
+        @api.scraper_search(maxrows: 1).should have(1).item
       end
     end
 
@@ -106,7 +106,7 @@ class ScraperWiki::API
       it 'should return a non-empty array of hashes' do
         response = @api.scraper_usersearch
         response.should be_an(Array)
-        response.size.should_not be_zero
+        response.should have_at_least(1).item
         response.first.should be_a(Hash)
       end
 
@@ -117,7 +117,7 @@ class ScraperWiki::API
       end
 
       it 'should respect the :maxrows argument' do
-        @api.scraper_usersearch(maxrows: 1).size.should == 1
+        @api.scraper_usersearch(maxrows: 1).should have(1).item
       end
 
       it 'should respect the :nolist argument (as an array)' do
