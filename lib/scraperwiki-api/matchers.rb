@@ -2,8 +2,27 @@ require 'rspec'
 
 module ScraperWiki
   class API
+    # @example
+    #   require 'scraperwiki-api'
+    #
+    #   api = ScraperWiki::API.new
+    #   info = api.scraper_getinfo(shortname).first
+    #
+    #   describe Hash do
+    #     include ScraperWiki::API::Matchers
+    #     subject {info}
+    #
+    #     it {should be_protected}
+    #     it {should be_editable_by('frabcus')}
+    #     it {should run(:daily)}
+    #     it {should_not be_broken}
+    #     it {should_not have_at_least_the_keys(['name', 'email']).on('swdata')}
+    #     it {should_not have_at_most_the_keys(['name', 'email', 'tel', 'fax']).on('swdata')}
+    #   end
+    #
+    # RSpec matchers for ScraperWiki scrapers.
+    # @see http://rubydoc.info/gems/rspec-expectations/RSpec/Matchers
     module Matchers
-      # @see http://rubydoc.info/gems/rspec-expectations/RSpec/Matchers
       class CustomMatcher
         def initialize(expected)
           @expected = expected
@@ -40,12 +59,18 @@ module ScraperWiki
           "expected #{@info['short_name']} to be #{@expected}"
         end
       end
+      # @example
+      #   it {should be_public}
       def be_public
         PrivacyStatusMatcher.new 'public'
       end
+      # @example
+      #   it {should be_protected}
       def be_protected
         PrivacyStatusMatcher.new 'visible'
       end
+      # @example
+      #   it {should be_private}
       def be_private
         PrivacyStatusMatcher.new 'private'
       end
@@ -62,6 +87,8 @@ module ScraperWiki
           "expected #{@info['short_name']} to be editable by #{@expected}"
         end
       end
+      # @example
+      #   it {should be_editable_by 'frabcus'}
       def be_editable_by(expected)
         UserRolesMatcher.new expected
       end
@@ -80,9 +107,13 @@ module ScraperWiki
           end
         end
       end
+      # @example
+      #   it {should run(:daily)}
       def run(expected)
         RunIntervalMatcher.new expected
       end
+      # @example
+      #   it {should never_run}
       def never_run
         RunIntervalMatcher.new :never
       end
@@ -118,6 +149,8 @@ module ScraperWiki
           'is missing keys'
         end
       end
+      # @example
+      #   it {should have_at_least_the_keys(['fieldA', 'fieldB']).on('swdata')}
       def have_at_least_the_keys(expected)
         MissingKeysMatcher.new expected
       end
@@ -131,6 +164,8 @@ module ScraperWiki
           'has extra keys'
         end
       end
+      # @example
+      #   it {should have_at_most_the_keys(['fieldA', 'fieldB', 'fieldC', 'fieldD']).on('swdata')}
       def have_at_most_the_keys(expected)
         ExtraKeysMatcher.new expected
       end
@@ -145,6 +180,8 @@ module ScraperWiki
           "expected #{@info['short_name']} to have #{@expected} rows, not #{@info['datasummary']['tables'][@table]['count']}"
         end
       end
+      # @example
+      #   it {should have_total_rows_of(42).on('swdata')}
       def have_total_rows_of(expected)
         CountMatcher.new expected
       end
@@ -169,6 +206,8 @@ module ScraperWiki
           "#{@info['short_name']} is broken: #{exception_message}"
         end
       end
+      # @example
+      #   it {should_not be_broken}
       def be_broken
         ExceptionMessageMatcher.new nil
       end
