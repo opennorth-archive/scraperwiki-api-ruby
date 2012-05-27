@@ -1,5 +1,4 @@
 require 'httparty'
-require 'scraperwiki-api/version'
 
 module ScraperWiki
   # A Ruby wrapper for the ScraperWiki API.
@@ -10,6 +9,32 @@ module ScraperWiki
 
     class Error < StandardError; end
     class ScraperNotFound < Error; end
+
+    RUN_INTERVALS = {
+      never: -1,
+      monthly: 2678400,
+      weekly: 604800,
+      daily: 86400,
+      hourly: 3600,
+    }
+
+    class << self
+      # Returns the URL to the scraper's overview.
+      #
+      # @param [String] shortname the scraper's shortname
+      # @return [String] the URL to the scraper's overview
+      def scraper_url(shortname)
+        "https://scraperwiki.com/scrapers/#{shortname}/"
+      end
+
+      # Returns the URL to edit the scraper.
+      #
+      # @param [String] shortname the scraper's shortname
+      # @return [String] the URL to edit the scraper
+      def edit_scraper_url(shortname)
+        "https://scraperwiki.com/scrapers/#{shortname}/edit/"
+      end
+    end
 
     # Initializes a ScraperWiki API object.
     def initialize(apikey = nil)
@@ -56,10 +81,11 @@ module ScraperWiki
     #   "htmltable" or "rss2"
     # @option opts [String] :attach ";"-delimited list of shortnames of other
     #   scrapers whose data you need to access
+    # @return [Array,Hash,String]
     # @see https://scraperwiki.com/docs/ruby/ruby_help_documentation/
     #
     # @note The query string parameter is +name+, not +shortname+
-    #   {https://scraperwiki.com/docs/api#sqlite as documented}
+    #   {https://scraperwiki.com/docs/api#sqlite as in the ScraperWiki docs}
     def datastore_sqlite(shortname, query, opts = {})
       if Array === opts[:attach]
         opts[:attach] = opts[:attach].join ';'
@@ -69,10 +95,20 @@ module ScraperWiki
 
     # Extracts data about a scraper's code, owner, history, etc.
     #
-    # Example output:
-    # * The +runid+ is a Unix timestamp with microseconds and a UUID.
+    # * +runid+ is a Unix timestamp with microseconds and a UUID.
     # * The value of +records+ is the same as that of +total_rows+ under +datasummary+.
-    # * +run_interval+ is the number of seconds between runs.
+    # * +run_interval+ is the number of seconds between runs. It is one of:
+    #   * -1 (never)
+    #   * 2678400 (monthly)
+    #   * 604800 (weekly)
+    #   * 86400 (daily)
+    #   * 3600 (hourly)
+    # * +privacy_status+ is one of:
+    #   * "public" (everyone can see and edit the scraper and its data)
+    #   * "visible" (everyone can see the scraper, but only contributors can edit it)
+    #   * "private" (only contributors can see and edit the scraper and its data)
+    #
+    # Example output:
     #
     #     [
     #       {
@@ -153,11 +189,12 @@ module ScraperWiki
     #   restricted to this date or after, enter as YYYY-MM-DD
     # @option opts [String] :quietfields "|"-delimited list of fields to exclude
     #   from the output. Must be a subset of 'code|runevents|datasummary|userroles|history'
+    # @return [Array]
     #
     # @note Returns an array although the array seems to always have only one item
     # @note The +tags+ field seems to always be an empty array
     # @note The query string parameter is +name+, not +shortname+
-    #   {https://scraperwiki.com/docs/api#getinfo as documented}
+    #   {https://scraperwiki.com/docs/api#getinfo as in the ScraperWiki docs}
     def scraper_getinfo(shortname, opts = {})
       if Array === opts[:quietfields]
         opts[:quietfields] = opts[:quietfields].join '|'
@@ -192,10 +229,11 @@ module ScraperWiki
     # @param [String] shortname the scraper's shortname (as it appears in the URL)
     # @param [Hash] opts optional arguments
     # @option opts [String] runid a run ID
+    # @return [Array]
     #
     # @note Returns an array although the array seems to always have only one item
     # @note The query string parameter is +name+, not +shortname+
-    #   {https://scraperwiki.com/docs/api#getinfo as documented}
+    #   {https://scraperwiki.com/docs/api#getinfo as in the ScraperWiki docs}
     def scraper_getruninfo(shortname, opts = {})
       request_with_apikey '/scraper/getruninfo', {name: shortname}.merge(opts)
     end
@@ -227,6 +265,7 @@ module ScraperWiki
     #     ]
     #
     # @param [String] username a username
+    # @return [Array]
     #
     # @note Returns an array although the array seems to always have only one item
     # @note The date joined field is +date_joined+ (with underscore) on
@@ -256,6 +295,7 @@ module ScraperWiki
     # @option opts [Integer] :maxrows number of results to return [default 5]
     # @option opts [String] :requestinguser the name of the user making the
     #   search, which changes the order of the matches
+    # @return [Array]
     def scraper_search(opts = {})
       request_with_apikey '/scraper/search', opts
     end
@@ -280,6 +320,7 @@ module ScraperWiki
     #   from the output
     # @option opts [String] :requestinguser the name of the user making the
     #   search, which changes the order of the matches
+    # @return [Array]
     #
     # @note The date joined field is +datejoined+ (without underscore) on
     #   {#scraper_getuserinfo}
