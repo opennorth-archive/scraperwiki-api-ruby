@@ -38,9 +38,10 @@ If your project uses a lot of scrapers – for example, [OpenCorporates](http:/
 
     require 'scraperwiki-api'
     api = ScraperWiki::API.new
-    info = api.scraper_getinfo(shortname).first
 
-    describe 'Scraper errors' do
+    info = api.scraper_getinfo('example-scraper').first
+
+    describe 'example-scraper' do
       include ScraperWiki::API::Matchers
       subject {info}
 
@@ -51,6 +52,22 @@ If your project uses a lot of scrapers – for example, [OpenCorporates](http:/
       it {should have_at_least_the_keys(['name', 'email']).on('swdata')}
       it {should have_at_most_the_keys(['name', 'email', 'tel', 'fax']).on('swdata')}
       it {should have_a_row_count_of(42).on('swdata')}
+    end
+
+    data = api.datastore_sqlite('example-scraper', 'SELECT * from `swdata`')
+
+    describe 'example-scraper' do
+      include ScraperWiki::API::Matchers
+      subject {data}
+
+      it {should_not have_blank_values.in('name')}
+      it {should have_unique_values.in('email')}
+      it {should have_values_of(['M', 'F']).in('gender')}
+      it {should have_values_matching(/\A[^@\s]+@[^a\s]+\z/).in('email')}
+      it {should have_values_starting_with('http://').in('url')}
+      it {should have_values_ending_with('Inc.').in('company_name')}
+      it {should have_integer_values.in('year')}
+      it {should set_any_of(['name', 'first_name', 'last_name'])}
     end
 
 More documentation at [RubyDoc.info](http://rdoc.info/gems/scraperwiki-api/ScraperWiki/API/Matchers).
