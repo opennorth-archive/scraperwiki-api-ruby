@@ -107,6 +107,8 @@ module ScraperWiki
     #   * "public" (everyone can see and edit the scraper and its data)
     #   * "visible" (everyone can see the scraper, but only contributors can edit it)
     #   * "private" (only contributors can see and edit the scraper and its data)
+    # * An individual +runevents+ hash will have an +exception_message+ key if
+    #   there was an error during that run.
     #
     # Example output:
     #
