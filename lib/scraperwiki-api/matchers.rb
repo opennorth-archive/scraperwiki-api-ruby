@@ -357,11 +357,11 @@ module ScraperWiki
               else
                 v = Yajl::Parser.parse item[@field]
                 if Hash === v
-                  match? v[@subfield]
+                  v.has_key?(@subfield) && match?(v[@subfield])
                 elsif Array === v
                   v.all? do |w|
                     if Hash === w
-                      match? w[@subfield]
+                      w.has_key?(@subfield) && match?(w[@subfield])
                     else
                       raise NotImplementerError, 'Can only handle subfields that are hashes or arrays of hashes'
                     end
@@ -456,11 +456,15 @@ module ScraperWiki
               unless blank? item[@field]
                 v = Yajl::Parser.parse item[@field]
                 if Hash === v
-                  counts[v[@subfield]] += 1
+                  unless blank? v[@subfield]
+                    counts[v[@subfield]] += 1
+                  end
                 elsif Array === v
                   v.each do |w|
                     if Hash === w
-                      counts[w[@subfield]] += 1
+                      unless blank? w[@subfield]
+                        counts[w[@subfield]] += 1
+                      end
                     else
                       raise NotImplementerError, 'Can only handle subfields that are hashes or arrays of hashes'
                     end
@@ -545,7 +549,11 @@ module ScraperWiki
               difference(w).empty?
             elsif Array === w
               w.all? do |x|
-                difference(x).empty?
+                if Hash === x
+                  difference(x).empty?
+                else
+                  raise NotImplementerError, 'Can only handle subfields that are hashes or arrays of hashes'
+                end
               end
             else
               raise NotImplementerError, 'Can only handle subfields that are hashes or arrays of hashes'
