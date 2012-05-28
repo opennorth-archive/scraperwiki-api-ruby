@@ -50,7 +50,7 @@ If your project uses a lot of scrapers – for example, [OpenCorporates](http:/
       it {should_not be_broken}
       it {should have_at_least_the_keys(['name', 'email']).on('swdata')}
       it {should have_at_most_the_keys(['name', 'email', 'tel', 'fax']).on('swdata')}
-      it {should have_total_rows_of(42).on('swdata')}
+      it {should have_a_row_count_of(42).on('swdata')}
     end
 
 More documentation at [RubyDoc.info](http://rdoc.info/gems/scraperwiki-api/ScraperWiki/API/Matchers).

@@ -18,7 +18,7 @@ module ScraperWiki
     #     it {should_not be_broken}
     #     it {should have_at_least_the_keys(['name', 'email']).on('swdata')}
     #     it {should have_at_most_the_keys(['name', 'email', 'tel', 'fax']).on('swdata')}
-    #     it {should have_total_rows_of(42).on('swdata')}
+    #     it {should have_a_row_count_of(42).on('swdata')}
     #   end
     #
     # RSpec matchers for ScraperWiki scrapers.
@@ -29,35 +29,32 @@ module ScraperWiki
           @expected = expected
         end
 
-        def matches?(info)
-          @info = info
+        def matches?(actual)
+          @actual = actual
         end
 
-        def failure_phrase
-          @expected
+        def failure_message
+          NotImplementerError
         end
 
-        def negative_failure_phrase
-          failure_phrase
-        end
-
-        def failure_message_for_should
-          [failure_phrase, ScraperWiki::API.scraper_url(@info['short_name'])].join "\n"
-        end
-
-        def failure_message_for_should_not
-          failure_message_for_should
+        def negative_failure_message
+          failure_message
         end
       end
 
-      class PrivacyStatusMatcher < CustomMatcher
-        def matches?(info)
+      # Scraper matchers -------------------------------------------------------
+
+      class ScraperInfoMatcher < CustomMatcher
+      end
+
+      class PrivacyStatusMatcher < ScraperInfoMatcher
+        def matches?(actual)
           super
-          info['privacy_status'] == @expected
+          actual['privacy_status'] == @expected
         end
 
-        def failure_phrase
-          "expected #{@info['short_name']} to be #{@expected}"
+        def failure_message
+          "expected #{@actual['short_name']} to be #{@expected}"
         end
       end
       # @example
@@ -76,16 +73,16 @@ module ScraperWiki
         PrivacyStatusMatcher.new 'private'
       end
 
-      class UserRolesMatcher < CustomMatcher
-        def matches?(info)
+      class UserRolesMatcher < ScraperInfoMatcher
+        def matches?(actual)
           super
           %w(owner editor).any? do |userrole|
-            info['userroles'][userrole].include? @expected
+            actual['userroles'][userrole].include? @expected
           end
         end
 
-        def failure_phrase
-          "expected #{@info['short_name']} to be editable by #{@expected}"
+        def failure_message
+          "expected #{@actual['short_name']} to be editable by #{@expected}"
         end
       end
       # @example
@@ -94,17 +91,17 @@ module ScraperWiki
         UserRolesMatcher.new expected
       end
 
-      class RunIntervalMatcher < CustomMatcher
-        def matches?(info)
+      class RunIntervalMatcher < ScraperInfoMatcher
+        def matches?(actual)
           super
-          info['run_interval'] == ScraperWiki::API::RUN_INTERVALS[@expected]
+          actual['run_interval'] == ScraperWiki::API::RUN_INTERVALS[@expected]
         end
 
-        def failure_phrase
+        def failure_message
           if @expected == -1
-            "expected #{@info['short_name']} to never run"
+            "expected #{@actual['short_name']} to never run"
           else
-            "expected #{@info['short_name']} to run #{@expected}"
+            "expected #{@actual['short_name']} to run #{@expected}"
           end
         end
       end
@@ -119,7 +116,7 @@ module ScraperWiki
         RunIntervalMatcher.new :never
       end
 
-      class TablesMatcher < CustomMatcher
+      class TablesMatcher < ScraperInfoMatcher
         def on(table)
           @table = table
           self
@@ -127,7 +124,7 @@ module ScraperWiki
       end
 
       class KeysMatcher < TablesMatcher
-        def matches?(info)
+        def matches?(actual)
           super
           difference.empty?
         end
@@ -136,14 +133,14 @@ module ScraperWiki
           raise NotImplementerError
         end
 
-        def failure_phrase
-          "#{@info['short_name']} #{failure_predicate}: #{difference.join ', '}"
+        def failure_message
+          "#{@actual['short_name']} #{failure_predicate}: #{difference.join ', '}"
         end
       end
 
       class MissingKeysMatcher < KeysMatcher
         def difference
-          @expected - @info['datasummary']['tables'][@table]['keys']
+          @expected - @actual['datasummary']['tables'][@table]['keys']
         end
 
         def failure_predicate
@@ -158,7 +155,7 @@ module ScraperWiki
 
       class ExtraKeysMatcher < KeysMatcher
         def difference
-          @info['datasummary']['tables'][@table]['keys'] - @expected
+          @actual['datasummary']['tables'][@table]['keys'] - @expected
         end
 
         def failure_predicate
@@ -172,29 +169,29 @@ module ScraperWiki
       end
 
       class CountMatcher < TablesMatcher
-        def matches?(info)
+        def matches?(actual)
           super
-          info['datasummary']['tables'][@table]['count'] == @expected
+          actual['datasummary']['tables'][@table]['count'] == @expected
         end
 
-        def failure_phrase
-          "expected #{@info['short_name']} to have #{@expected} rows, not #{@info['datasummary']['tables'][@table]['count']}"
+        def failure_message
+          "expected #{@actual['short_name']} to have #{@expected} rows, not #{@actual['datasummary']['tables'][@table]['count']}"
         end
       end
       # @example
-      #   it {should have_total_rows_of(42).on('swdata')}
-      def have_total_rows_of(expected)
+      #   it {should have_a_row_count_of(42).on('swdata')}
+      def have_a_row_count_of(expected)
         CountMatcher.new expected
       end
 
-      class RunEventsMatcher < CustomMatcher
+      class RunEventsMatcher < ScraperInfoMatcher
         def last_run
-          @info['runevents'][0]
+          @actual['runevents'][0]
         end
       end
 
       class ExceptionMessageMatcher < RunEventsMatcher
-        def matches?(info)
+        def matches?(actual)
           super
           exception_message
         end
@@ -203,14 +200,207 @@ module ScraperWiki
           last_run['exception_message']
         end
 
-        def failure_phrase
-          "#{@info['short_name']} is broken: #{exception_message}"
+        def failure_message
+          "#{@actual['short_name']} is broken: #{exception_message}"
         end
       end
       # @example
       #   it {should_not be_broken}
       def be_broken
         ExceptionMessageMatcher.new nil
+      end
+
+      # Datastore matchers -----------------------------------------------------
+
+      class DatastoreMatcher < CustomMatcher
+        def items
+          if Array === @actual
+            @actual
+          elsif Hash === @actual
+            @actual['data'].map do |array|
+              hash = {}
+              @actual['keys'].each_with_index do |key,index|
+                hash[key] = array[index]
+              end
+              hash
+            end
+          else
+            raise NotImplementerError
+          end
+        end
+
+        def matches?(actual)
+          super
+          @mismatches = mismatches
+          @mismatches.empty?
+        end
+
+        def mismatches
+          raise NotImplementerError
+        end
+
+        def failure_description
+          raise NotImplementerError
+        end
+
+        def failure_message
+          "#{failure_description}\n#{@mismatches.map(&:inspect).join "\n"}"
+        end
+
+        def negative_failure_message
+          failure_message
+        end
+      end
+
+      class SetAnyOf < DatastoreMatcher
+        def mismatches
+          items.select do |item|
+            @expected.all? do |field|
+              item[field].respond_to?(:empty?) ? item[field].empty? : !item[field]
+            end
+          end
+        end
+
+        def failure_description
+          "Some records didn't set any of #{@expected.join ','}"
+        end
+      end
+      # @example
+      #   it {should set_any_of(['name', 'first_name', 'last_name'])}
+      def set_any_of(expected)
+        SetAnyOf.new expected
+      end
+
+      class FieldMatcher < DatastoreMatcher
+        def in(field)
+          @field = field
+          self
+        end
+
+        def mismatches
+          items.reject do |item|
+            match? item[@field]
+          end
+        end
+
+        def blank?(v)
+          v.respond_to?(:empty?) ? v.empty? : !v
+        end
+
+        def failure_description
+          "Some '#{@field}' values #{failure_predicate}"
+        end
+      end
+
+      class HaveBlankValues < FieldMatcher
+        def match?(v)
+          blank? v
+        end
+
+        def failure_predicate
+          'are blank'
+        end
+      end
+      # @example
+      #   it {should_not have_blank_values.in('email')}
+      def have_blank_values
+        HaveBlankValues.new nil
+      end
+
+      class HaveValuesOf < FieldMatcher
+        def match?(v)
+          blank?(v) || @expected.include?(v)
+        end
+
+        def failure_predicate
+          "aren't one of #{@expected.join ', '}"
+        end
+      end
+      # @example
+      #   it {should have_values_of(['M', 'F']).in('gender')}
+      def have_values_of(expected)
+        HaveValuesOf.new expected
+      end
+
+      class HaveValuesMatching < FieldMatcher
+        def match?(v)
+          blank?(v) || v[@expected]
+        end
+
+        def failure_predicate
+          "don't match #{@expected.inspect}"
+        end
+      end
+      # @example
+      #   it {should have_values_matching(/\A[^@\s]+@[^a\s]+\z/).in('email')}
+      def have_values_matching(expected)
+        HaveValuesMatching.new expected
+      end
+
+      class HaveUniqueValues < FieldMatcher
+        def mismatches
+          counts = Hash.new 0
+          items.each_with_index do |item,index|
+            unless blank? item[@field]
+              counts[item[@field]] += 1
+            end
+          end
+          counts.select{|_,count| count > 1}.keys
+        end
+
+        def failure_predicate
+          'are not unique'
+        end
+      end
+      # @example
+      #   it {should have_unique_values.in('email')}
+      def have_unique_values
+        HaveUniqueValues.new nil
+      end
+
+      class HaveValuesStartingWith < FieldMatcher
+        def match?(v)
+          blank?(v) || v.start_with?(@expected)
+        end
+
+        def failure_predicate
+          "don't start with #{@expected}"
+        end
+      end
+      # @example
+      #   it {should have_values_starting_with('http://').in('url')}
+      def have_values_starting_with(expected)
+        HaveValuesStartingWith.new expected
+      end
+
+      class HaveValuesEndingWith < FieldMatcher
+        def match?(v)
+          blank?(v) || v.end_with?(@expected)
+        end
+
+        def failure_predicate
+          "don't end with #{@expected}"
+        end
+      end
+      # @example
+      #   it {should have_values_ending_with('Inc.').in('company_name')}
+      def have_values_ending_with(expected)
+        HaveValuesEndingWith.new expected
+      end
+
+      class HaveIntegerValues < FieldMatcher
+        def match?(v)
+          blank?(v) || (Integer(v) rescue false)
+        end
+
+        def failure_predicate
+          "aren't integers"
+        end
+      end
+      # @example
+      #   it {should have_integer_values.in('year')}
+      def have_integer_values
+        HaveIntegerValues.new nil
       end
     end
   end
