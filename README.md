@@ -34,7 +34,7 @@ More documentation at [RubyDoc.info](http://rdoc.info/gems/scraperwiki-api/Scrap
 
 ## Scraper validations
 
-If your project uses a lot of scrapers – for example, [OpenCorporates](http://opencorporates.com/), which [scrapes company registries around the world](http://blog.opencorporates.com/2011/03/25/building-a-global-database-the-open-distributed-way/) or [Represent](http://represent.opennorth.ca/), which scrapes information on elected officials from government websites in Canada – you'll want to check that your scrapers behave the way you expect them to. This gem defines [RSpec](https://www.relishapp.com/rspec) matchers to do just that.
+If your project uses a lot of scrapers – for example, [OpenCorporates](http://opencorporates.com/), which [scrapes company registries around the world](http://blog.opencorporates.com/2011/03/25/building-a-global-database-the-open-distributed-way/), or [Represent](http://represent.opennorth.ca/), which scrapes information on elected officials from government websites in Canada – you'll want to check that your scrapers behave the way you expect them to. This gem defines [RSpec](https://www.relishapp.com/rspec) matchers to do just that. For example:
 
     require 'scraperwiki-api'
     api = ScraperWiki::API.new
