@@ -33,6 +33,10 @@ module ScraperWiki
           @actual = actual
         end
 
+        def does_not_match?(actual)
+          @actual = actual
+        end
+
         def failure_message
           NotImplementerError
         end
@@ -214,7 +218,7 @@ module ScraperWiki
 
       class DatastoreMatcher < CustomMatcher
         def items
-          if Array === @actual
+          @items ||= if Array === @actual
             @actual
           elsif Hash === @actual
             @actual['data'].map do |array|
@@ -235,8 +239,34 @@ module ScraperWiki
           @mismatches.empty?
         end
 
+        def does_not_match?(actual)
+          super
+          @matches = matches
+          @matches.empty?
+        end
+
+        def matches
+          raise NotImplementerError
+        end
+
         def mismatches
           raise NotImplementerError
+        end
+
+        def failures
+          if @mismatches
+            @mismatches
+          else
+            @matches
+          end
+        end
+
+        def failure_size
+          if @mismatches
+            @mismatches.size
+          else
+            @matches.size
+          end
         end
 
         def failure_description
@@ -244,7 +274,7 @@ module ScraperWiki
         end
 
         def failure_message
-          "#{failure_description}\n#{@mismatches.map(&:inspect).join "\n"}"
+          "#{failure_size} of #{items.size} #{failure_description}\n#{failures.map(&:inspect).join "\n"}"
         end
 
         def negative_failure_message
@@ -262,7 +292,7 @@ module ScraperWiki
         end
 
         def failure_description
-          "Some records didn't set any of #{@expected.join ','}"
+          "records didn't set any of #{@expected.join ','}"
         end
       end
       # @example
@@ -277,6 +307,12 @@ module ScraperWiki
           self
         end
 
+        def matches
+          items.select do |item|
+            match? item[@field]
+          end
+        end
+
         def mismatches
           items.reject do |item|
             match? item[@field]
@@ -288,7 +324,7 @@ module ScraperWiki
         end
 
         def failure_description
-          "Some '#{@field}' values #{failure_predicate}"
+          "'#{@field}' values #{failure_predicate}"
         end
       end
 
