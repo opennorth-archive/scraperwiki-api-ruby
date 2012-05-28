@@ -49,9 +49,13 @@ If your project uses a lot of scrapers – for example, [OpenCorporates](http:/
       it {should be_editable_by('frabcus')}
       it {should run(:daily)}
       it {should_not be_broken}
-      it {should have_at_least_the_keys(['name', 'email']).on('swdata')}
-      it {should have_at_most_the_keys(['name', 'email', 'tel', 'fax']).on('swdata')}
       it {should have_a_row_count_of(42).on('swdata')}
+
+      # Check for missing keys:
+      it {should have_at_least_the_keys(['name', 'email']).on('swdata')}
+
+      # Check for extra keys:
+      it {should have_at_most_the_keys(['name', 'email', 'tel', 'fax']).on('swdata')}
     end
 
     data = api.datastore_sqlite('example-scraper', 'SELECT * from `swdata`')
@@ -60,6 +64,9 @@ If your project uses a lot of scrapers – for example, [OpenCorporates](http:/
       include ScraperWiki::API::Matchers
       subject {data}
 
+      it {should set_any_of(['name', 'first_name', 'last_name'])}
+
+      # Validate the values of individual fields:
       it {should_not have_blank_values.in('name')}
       it {should have_unique_values.in('email')}
       it {should have_values_of(['M', 'F']).in('gender')}
@@ -67,7 +74,16 @@ If your project uses a lot of scrapers – for example, [OpenCorporates](http:/
       it {should have_values_starting_with('http://').in('url')}
       it {should have_values_ending_with('Inc.').in('company_name')}
       it {should have_integer_values.in('year')}
-      it {should set_any_of(['name', 'first_name', 'last_name'])}
+
+      # If you store a hash or an array of hashes in a field as a JSON string,
+      # you can validate the values of these subfields by chaining on an +at+:
+      it {should have_values_of(['M', 'F']).in('extra').at('gender')}
+
+      # Check for missing keys within subfields:
+      it {should have_values_with_at_least_the_keys(['subfield1', 'subfield2']).in('fieldA')}
+
+      # Check for extra keys within subfields:
+      it {should have_values_with_at_most_the_keys(['subfield1', 'subfield2', 'subfield3', 'subfield4']).in('fieldA')}
     end
 
 More documentation at [RubyDoc.info](http://rdoc.info/gems/scraperwiki-api/ScraperWiki/API/Matchers).
