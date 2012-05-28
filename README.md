@@ -6,7 +6,7 @@ A Ruby wrapper for the ScraperWiki API.
 
     gem install scraperwiki-api
 
-## Examples
+## API Examples
 
     >> require 'scraperwiki-api'
 
@@ -30,7 +30,30 @@ A Ruby wrapper for the ScraperWiki API.
     >> api.scraper_usersearch searchquery: 'search terms'
     => [{"username"=>"johndoe", "profilename"=>"John Doe", "date_joined"=>...}]
 
-Thorough documentation at [RubyDoc.info](http://rdoc.info/gems/scraperwiki-api/ScraperWiki/API).
+More documentation at [RubyDoc.info](http://rdoc.info/gems/scraperwiki-api/ScraperWiki/API).
+
+## Scraper validations
+
+If your project uses a lot of scrapers – for example, [OpenCorporates](http://opencorporates.com/), which [scrapes company registries around the world](http://blog.opencorporates.com/2011/03/25/building-a-global-database-the-open-distributed-way/) or [Represent](http://represent.opennorth.ca/), which scrapes information on elected officials from government websites in Canada – you'll want to check that your scrapers behave the way you expect them to. This gem defines [RSpec](https://www.relishapp.com/rspec) matchers to do just that.
+
+    require 'scraperwiki-api'
+    api = ScraperWiki::API.new
+    info = api.scraper_getinfo(shortname).first
+
+    describe 'Scraper errors' do
+      include ScraperWiki::API::Matchers
+      subject {info}
+
+      it {should be_protected}
+      it {should be_editable_by('frabcus')}
+      it {should run(:daily)}
+      it {should_not be_broken}
+      it {should have_at_least_the_keys(['name', 'email']).on('swdata')}
+      it {should have_at_most_the_keys(['name', 'email', 'tel', 'fax']).on('swdata')}
+      it {should have_total_rows_of(42).on('swdata')}
+    end
+
+More documentation at [RubyDoc.info](http://rdoc.info/gems/scraperwiki-api/ScraperWiki/API/Matchers).
 
 ## Bugs? Questions?
 

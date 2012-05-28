@@ -16,8 +16,9 @@ module ScraperWiki
     #     it {should be_editable_by('frabcus')}
     #     it {should run(:daily)}
     #     it {should_not be_broken}
-    #     it {should_not have_at_least_the_keys(['name', 'email']).on('swdata')}
-    #     it {should_not have_at_most_the_keys(['name', 'email', 'tel', 'fax']).on('swdata')}
+    #     it {should have_at_least_the_keys(['name', 'email']).on('swdata')}
+    #     it {should have_at_most_the_keys(['name', 'email', 'tel', 'fax']).on('swdata')}
+    #     it {should have_total_rows_of(42).on('swdata')}
     #   end
     #
     # RSpec matchers for ScraperWiki scrapers.
