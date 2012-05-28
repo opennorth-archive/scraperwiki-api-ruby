@@ -54,7 +54,7 @@ module ScraperWiki
         end
 
         def failure_message
-          NotImplementerError
+          raise NotImplementerError, 'Subclasses must implement this method'
         end
 
         def negative_failure_message
@@ -149,12 +149,16 @@ module ScraperWiki
           difference.empty?
         end
 
-        def failure_predicate
-          raise NotImplementerError
-        end
-
         def failure_message
           "#{@actual['short_name']} #{failure_predicate}: #{difference.join ', '}"
+        end
+
+        def failure_predicate
+          raise NotImplementerError, 'Subclasses must implement this method'
+        end
+
+        def difference
+          raise NotImplementerError, 'Subclasses must implement this method'
         end
       end
 
@@ -245,7 +249,7 @@ module ScraperWiki
               hash
             end
           else
-            raise NotImplementerError
+            raise NotImplementerError, "Can only handle jsondict or jsonlist formats"
           end
         end
 
@@ -262,11 +266,11 @@ module ScraperWiki
         end
 
         def matches
-          raise NotImplementerError
+          raise NotImplementerError, 'Subclasses must implement this method'
         end
 
         def mismatches
-          raise NotImplementerError
+          raise NotImplementerError, 'Subclasses must implement this method'
         end
 
         def failures
@@ -285,16 +289,16 @@ module ScraperWiki
           end
         end
 
-        def failure_description
-          raise NotImplementerError
-        end
-
         def failure_message
           "#{failure_size} of #{items.size} #{failure_description}\n#{failures.map(&:inspect).join "\n"}"
         end
 
         def negative_failure_message
           failure_message
+        end
+
+        def failure_description
+          raise NotImplementerError, 'Subclasses must implement this method'
         end
       end
 
@@ -323,16 +327,47 @@ module ScraperWiki
           self
         end
 
-        def matches
-          items.select do |item|
-            match? item[@field]
+        def at(subfield)
+          @subfield = subfield
+          self
+        end
+
+        # @note +@subfield+ can be a hash or an array of hashes
+        def matcher(meth)
+          if @subfield
+            items.send(meth) do |item|
+              if blank? item[@field]
+                true
+              else
+                v = Yajl::Parser.parse item[@field]
+                if Hash === v
+                  match? v[@subfield]
+                elsif Array === v
+                  v.all? do |w|
+                    if Hash === w
+                      match? w[@subfield]
+                    else
+                      raise NotImplementerError, 'Can only handle subfields that are hashes or arrays of hashes'
+                    end
+                  end
+                else
+                  raise NotImplementerError, 'Can only handle subfields that are hashes or arrays of hashes'
+                end
+              end
+            end
+          else
+            items.send(meth) do |item|
+              match? item[@field]
+            end
           end
         end
 
+        def matches
+          matcher :select
+        end
+
         def mismatches
-          items.reject do |item|
-            match? item[@field]
-          end
+          matcher :reject
         end
 
         def blank?(v)
@@ -340,7 +375,15 @@ module ScraperWiki
         end
 
         def failure_description
-          "'#{@field}' values #{failure_predicate}"
+          if @subfield
+            "#{@field}:#{@subfield} values #{failure_predicate}"
+          else
+            "#{@field} values #{failure_predicate}"
+          end
+        end
+
+        def failure_predicate
+          raise NotImplementerError, 'Subclasses must implement this method'
         end
       end
 
@@ -453,6 +496,63 @@ module ScraperWiki
       #   it {should have_integer_values.in('year')}
       def have_integer_values
         HaveIntegerValues.new nil
+      end
+
+      class FieldKeyMatcher < FieldMatcher
+        def match?(v)
+          if blank? v
+            true
+          else
+            w = Yajl::Parser.parse v
+            if Hash === w
+              difference(w).empty?
+            elsif Array === w
+              w.all? do |x|
+                difference(x).empty?
+              end
+            else
+              raise NotImplementerError, 'Can only handle subfields that are hashes or arrays of hashes'
+            end
+          end
+        end
+
+        def difference(v)
+          raise NotImplementerError, 'Subclasses must implement this method'
+        end
+
+        def failure_predicate
+          "#{predicate}: #{difference.join ', '}"
+        end
+      end
+
+      class HaveValuesWithAtLeastTheKeys < FieldKeyMatcher
+        def difference(v)
+          @expected - v.keys
+        end
+
+        def failure_predicate
+          'have missing keys'
+        end
+      end
+      # @example
+      #   it {should have_values_with_at_least_the_keys(['subfield1', 'subfield2']).in('fieldA')}
+      def have_values_with_at_least_the_keys(expected)
+        HaveValuesWithAtLeastTheKeys.new expected
+      end
+
+      class HaveValuesWithAtMostTheKeys < FieldKeyMatcher
+        def difference(v)
+          v.keys - @expected
+        end
+
+        def failure_predicate
+          'have extra keys'
+        end
+      end
+      # @example
+      #   it {should have_values_with_at_most_the_keys(['subfield1', 'subfield2', 'subfield3', 'subfield4']).in('fieldA')}
+      def have_values_with_at_most_the_keys(expected)
+        HaveValuesWithAtMostTheKeys.new expected
       end
     end
   end
