@@ -74,7 +74,7 @@ module ScraperWiki
         end
 
         def negative_failure_message
-          failure_message
+          raise NotImplementerError, 'Subclasses must implement this method'
         end
       end
 
@@ -91,6 +91,10 @@ module ScraperWiki
 
         def failure_message
           "expected #{@actual['short_name']} to be #{@expected}"
+        end
+
+        def negative_failure_message
+          "expected #{@actual['short_name']} to not be #{@expected}"
         end
       end
       # @example
@@ -120,6 +124,10 @@ module ScraperWiki
         def failure_message
           "expected #{@actual['short_name']} to be editable by #{@expected}"
         end
+
+        def negative_failure_message
+          "expected #{@actual['short_name']} to not be editable by #{@expected}"
+        end
       end
       # @example
       #   it {should be_editable_by 'frabcus'}
@@ -138,6 +146,14 @@ module ScraperWiki
             "expected #{@actual['short_name']} to never run"
           else
             "expected #{@actual['short_name']} to run #{@expected}"
+          end
+        end
+
+        def negative_failure_message
+          if @expected == -1
+            "expected #{@actual['short_name']} to run at some time"
+          else
+            "expected #{@actual['short_name']} to not run #{@expected}"
           end
         end
       end
@@ -169,7 +185,15 @@ module ScraperWiki
           "#{@actual['short_name']} #{failure_predicate}: #{difference.join ', '}"
         end
 
+        def negative_failure_message
+          "#{@actual['short_name']} #{negative_failure_predicate}: #{difference.join ', '}"
+        end
+
         def failure_predicate
+          raise NotImplementerError, 'Subclasses must implement this method'
+        end
+
+        def negative_failure_message
           raise NotImplementerError, 'Subclasses must implement this method'
         end
 
@@ -186,6 +210,10 @@ module ScraperWiki
         def failure_predicate
           'is missing keys'
         end
+
+        def negative_failure_predicate
+          "isn't missing keys"
+        end
       end
       # @example
       #   it {should have_at_least_the_keys(['fieldA', 'fieldB']).on('swdata')}
@@ -200,6 +228,10 @@ module ScraperWiki
 
         def failure_predicate
           'has extra keys'
+        end
+
+        def negative_failure_predicate
+          'has no extra keys'
         end
       end
       # @example
@@ -216,6 +248,10 @@ module ScraperWiki
 
         def failure_message
           "expected #{@actual['short_name']} to have #{@expected} rows, not #{@actual['datasummary']['tables'][@table]['count']}"
+        end
+
+        def negative_failure_message
+          "expected #{@actual['short_name']} to not have #{@expected} rows"
         end
       end
       # @example
@@ -242,6 +278,10 @@ module ScraperWiki
 
         def failure_message
           "#{@actual['short_name']} is broken: #{exception_message}"
+        end
+
+        def negative_failure_message
+          "#{@actual['short_name']} isn't broken: #{exception_message}"
         end
       end
       # @example
@@ -310,10 +350,14 @@ module ScraperWiki
         end
 
         def negative_failure_message
-          failure_message
+          "#{failure_size} of #{items.size} #{negative_failure_description}\n#{failures.map(&:inspect).join "\n"}"
         end
 
         def failure_description
+          raise NotImplementerError, 'Subclasses must implement this method'
+        end
+
+        def negative_failure_description
           raise NotImplementerError, 'Subclasses must implement this method'
         end
       end
@@ -329,6 +373,10 @@ module ScraperWiki
 
         def failure_description
           "records didn't set any of #{@expected.join ','}"
+        end
+
+        def negative_failure_description
+          "records set any of #{@expected.join ','}"
         end
       end
       # @example
@@ -353,15 +401,23 @@ module ScraperWiki
           if @subfield
             items.send(meth) do |item|
               if blank? item[@field]
-                true
+                meth == :reject
               else
                 v = Yajl::Parser.parse item[@field]
                 if Hash === v
-                  v.has_key?(@subfield) && match?(v[@subfield])
+                  if blank? v[@subfield]
+                    meth == :reject
+                  else
+                    match? v[@subfield]
+                  end
                 elsif Array === v
                   v.all? do |w|
                     if Hash === w
-                      w.has_key?(@subfield) && match?(w[@subfield])
+                      if blank? w[@subfield]
+                        meth == :reject
+                      else
+                        match? w[@subfield]
+                      end
                     else
                       raise NotImplementerError, 'Can only handle subfields that are hashes or arrays of hashes'
                     end
@@ -373,7 +429,11 @@ module ScraperWiki
             end
           else
             items.send(meth) do |item|
-              match? item[@field]
+              if blank? item[@field]
+                meth == :reject
+              else
+                match? item[@field]
+              end
             end
           end
         end
@@ -398,7 +458,19 @@ module ScraperWiki
           end
         end
 
+        def negative_failure_description
+          if @subfield
+            "#{@field}:#{@subfield} values #{negative_failure_predicate}"
+          else
+            "#{@field} values #{negative_failure_predicate}"
+          end
+        end
+
         def failure_predicate
+          raise NotImplementerError, 'Subclasses must implement this method'
+        end
+
+        def negative_failure_predicate
           raise NotImplementerError, 'Subclasses must implement this method'
         end
       end
@@ -411,6 +483,10 @@ module ScraperWiki
         def failure_predicate
           'are blank'
         end
+
+        def negative_failure_predicate
+          'are present'
+        end
       end
       # @example
       #   it {should_not have_blank_values.in('name')}
@@ -420,11 +496,15 @@ module ScraperWiki
 
       class HaveValuesOf < FieldMatcher
         def match?(v)
-          blank?(v) || @expected.include?(v)
+          @expected.include? v
         end
 
         def failure_predicate
           "aren't one of #{@expected.join ', '}"
+        end
+
+        def negative_failure_predicate
+          "are one of #{@expected.join ', '}"
         end
       end
       # @example
@@ -435,11 +515,15 @@ module ScraperWiki
 
       class HaveValuesMatching < FieldMatcher
         def match?(v)
-          blank?(v) || v[@expected]
+          v[@expected]
         end
 
         def failure_predicate
           "don't match #{@expected.inspect}"
+        end
+
+        def negative_failure_predicate
+          "match #{@expected.inspect}"
         end
       end
       # @example
@@ -485,7 +569,11 @@ module ScraperWiki
         end
 
         def failure_predicate
-          'are not unique'
+          "aren't unique"
+        end
+
+        def negative_failure_predicate
+          'are unique'
         end
       end
       # @example
@@ -496,11 +584,15 @@ module ScraperWiki
 
       class HaveValuesStartingWith < FieldMatcher
         def match?(v)
-          blank?(v) || v.start_with?(@expected)
+          v.start_with? @expected
         end
 
         def failure_predicate
           "don't start with #{@expected}"
+        end
+
+        def negative_failure_predicate
+          "start with #{@expected}"
         end
       end
       # @example
@@ -511,11 +603,15 @@ module ScraperWiki
 
       class HaveValuesEndingWith < FieldMatcher
         def match?(v)
-          blank?(v) || v.end_with?(@expected)
+          v.end_with? @expected
         end
 
         def failure_predicate
           "don't end with #{@expected}"
+        end
+
+        def negative_failure_predicate
+          "end with #{@expected}"
         end
       end
       # @example
@@ -526,11 +622,15 @@ module ScraperWiki
 
       class HaveIntegerValues < FieldMatcher
         def match?(v)
-          blank?(v) || (Integer(v) rescue false)
+          Integer(v) rescue false
         end
 
         def failure_predicate
           "aren't integers"
+        end
+
+        def negative_failure_predicate
+          'are integers'
         end
       end
       # @example
@@ -541,23 +641,19 @@ module ScraperWiki
 
       class FieldKeyMatcher < FieldMatcher
         def match?(v)
-          if blank? v
-            true
-          else
-            w = Yajl::Parser.parse v
-            if Hash === w
-              difference(w).empty?
-            elsif Array === w
-              w.all? do |x|
-                if Hash === x
-                  difference(x).empty?
-                else
-                  raise NotImplementerError, 'Can only handle subfields that are hashes or arrays of hashes'
-                end
+          w = Yajl::Parser.parse v
+          if Hash === w
+            difference(w).empty?
+          elsif Array === w
+            w.all? do |x|
+              if Hash === x
+                difference(x).empty?
+              else
+                raise NotImplementerError, 'Can only handle subfields that are hashes or arrays of hashes'
               end
-            else
-              raise NotImplementerError, 'Can only handle subfields that are hashes or arrays of hashes'
             end
+          else
+            raise NotImplementerError, 'Can only handle subfields that are hashes or arrays of hashes'
           end
         end
 
@@ -568,6 +664,10 @@ module ScraperWiki
         def failure_predicate
           "#{predicate}: #{difference.join ', '}"
         end
+
+        def negative_failure_predicate
+          "#{negative_predicate}: #{difference.join ', '}"
+        end
       end
 
       class HaveValuesWithAtLeastTheKeys < FieldKeyMatcher
@@ -575,8 +675,12 @@ module ScraperWiki
           @expected - v.keys
         end
 
-        def failure_predicate
-          'have missing keys'
+        def predicate
+          'are missing keys'
+        end
+
+        def negative_predicate
+          "aren't missing keys"
         end
       end
       # @example
@@ -590,8 +694,12 @@ module ScraperWiki
           v.keys - @expected
         end
 
-        def failure_predicate
+        def predicate
           'have extra keys'
+        end
+
+        def negative_predicate
+          'have no extra keys'
         end
       end
       # @example
