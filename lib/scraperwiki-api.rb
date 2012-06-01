@@ -79,8 +79,8 @@ module ScraperWiki
     # @param [Hash] opts optional arguments
     # @option opts [String] :format one of "jsondict", "jsonlist", "csv",
     #   "htmltable" or "rss2"
-    # @option opts [String] :attach ";"-delimited list of shortnames of other
-    #   scrapers whose data you need to access
+    # @option opts [Array,String] :attach ";"-delimited list of shortnames of
+    #   other scrapers whose data you need to access
     # @return [Array,Hash,String]
     # @see https://scraperwiki.com/docs/ruby/ruby_help_documentation/
     #
@@ -189,12 +189,13 @@ module ScraperWiki
     # @option opts [String] :version version number (-1 for most recent) [default -1]
     # @option opts [String] :history_start_date history and runevents are
     #   restricted to this date or after, enter as YYYY-MM-DD
-    # @option opts [String] :quietfields "|"-delimited list of fields to exclude
-    #   from the output. Must be a subset of 'code|runevents|datasummary|userroles|history'
+    # @option opts [Array,String] :quietfields "|"-delimited list of fields to
+    #   exclude from the output. Must be a subset of 'code|runevents|datasummary|userroles|history'
     # @return [Array]
     #
     # @note Returns an array although the array seems to always have only one item
     # @note The +tags+ field seems to always be an empty array
+    # @note Fields like +last_run+ seem to follow British Summer Time.
     # @note The query string parameter is +name+, not +shortname+
     #   {https://scraperwiki.com/docs/api#getinfo as in the ScraperWiki docs}
     def scraper_getinfo(shortname, opts = {})
@@ -318,8 +319,8 @@ module ScraperWiki
     # @param [Hash] opts optional arguments
     # @option opts [String] :searchquery search terms
     # @option opts [Integer] :maxrows number of results to return [default 5]
-    # @option opts [String] :nolist space-separated list of usernames to exclude
-    #   from the output
+    # @option opts [Array,String] :nolist space-separated list of usernames to
+    #   exclude from the output
     # @option opts [String] :requestinguser the name of the user making the
     #   search, which changes the order of the matches
     # @return [Array]

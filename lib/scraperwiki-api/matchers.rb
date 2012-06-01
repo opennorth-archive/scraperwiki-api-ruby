@@ -1,3 +1,5 @@
+require 'time'
+
 require 'rspec'
 
 module ScraperWiki
@@ -166,6 +168,68 @@ module ScraperWiki
       #   it {should never_run}
       def never_run
         RunIntervalMatcher.new :never
+      end
+
+      class LastRunMatcher < ScraperInfoMatcher
+        def months
+          @multiplier = 2592000 # 30 days
+          self
+        end
+        alias :month :months
+
+        def weeks
+          @multiplier = 604800
+          self
+        end
+        alias :week :weeks
+
+        def days
+          @multiplier = 86400
+          self
+        end
+        alias :day :days
+
+        def hours
+          @multiplier = 3600
+          self
+        end
+        alias :hour :hours
+
+        def minutes
+          @multiplier = 60
+          self
+        end
+        alias :minute :minutes
+
+        def seconds
+          @multiplier = 3600
+          self
+        end
+        alias :second :seconds
+
+        # @todo +last_run+ seems to follow British Summer Time, in which case it
+        #   will be +00, not +01, for part of the year.
+        def matches?(actual)
+          super
+          Time.now - Time.parse("#{@actual['last_run']}+01") < span
+        end
+
+        def span
+          @expected * (@multiplier || 1)
+        end
+
+        def failure_message
+          "expected #{@actual['short_name']} to have run within #{span} seconds"
+        end
+
+        def negative_failure_message
+          "expected #{@actual['short_name']} to not have run within #{span} seconds"
+        end
+      end
+      # @example
+      #   it {should have_run_within(7).days}
+      def have_run_within(expected)
+        LastRunMatcher.new expected
       end
 
       class TablesMatcher < ScraperInfoMatcher
