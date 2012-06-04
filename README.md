@@ -2,6 +2,8 @@
 
 A Ruby wrapper for the ScraperWiki API.
 
+[![Build Status](https://secure.travis-ci.org/opennorth/scraperwiki-api-ruby.png)](http://travis-ci.org/opennorth/scraperwiki-api-ruby)
+
 ## Installation
 
     gem install scraperwiki-api

@@ -20,4 +20,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency('yajl-ruby', '~> 1.0')
   s.add_runtime_dependency('httparty', '~> 0.8.0')
   s.add_development_dependency('rspec', '~> 2.10')
+  s.add_development_dependency('rake')
 end
