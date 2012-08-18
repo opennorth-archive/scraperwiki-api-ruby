@@ -7,9 +7,6 @@ module ScraperWiki
     include HTTParty
     base_uri 'api.scraperwiki.com/api/1.0'
 
-    class Error < StandardError; end
-    class ScraperNotFound < Error; end
-
     RUN_INTERVALS = {
       never: -1,
       monthly: 2678400,
