@@ -1,6 +1,7 @@
 require 'time'
 
 require 'rspec'
+require 'yajl'
 
 module ScraperWiki
   class API
