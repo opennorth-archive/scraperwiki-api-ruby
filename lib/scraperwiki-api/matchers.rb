@@ -19,6 +19,7 @@ module ScraperWiki
     #     it {should be_editable_by('frabcus')}
     #     it {should run(:daily)}
     #     it {should_not be_broken}
+    #     it {should have_a_table('swdata')}
     #     it {should have_a_row_count_of(42).on('swdata')}
     #
     #     # Check for missing keys:
@@ -233,6 +234,26 @@ module ScraperWiki
         LastRunMatcher.new expected
       end
 
+      class TableMatcher < ScraperInfoMatcher
+        def matches?(actual)
+          super
+          actual['datasummary']['tables'].key?(@expected)
+        end
+
+        def failure_message
+          "expected #{@actual['short_name']} to have a #{@expected} table"
+        end
+
+        def negative_failure_message
+          "expected #{@actual['short_name']} to not have a #{@expected} table"
+        end
+      end
+      # @example
+      #   it {should have_a_table('swdata')}
+      def have_a_table(expected)
+        TableMatcher.new expected
+      end
+
       class TablesMatcher < ScraperInfoMatcher
         def on(table)
           @table = table
@@ -269,7 +290,12 @@ module ScraperWiki
 
       class MissingKeysMatcher < KeysMatcher
         def difference
-          @expected - @actual['datasummary']['tables'][@table]['keys']
+          keys = if @actual['datasummary']['tables'][@table]
+            @actual['datasummary']['tables'][@table]['keys']
+          else
+            []
+          end
+          @expected - keys
         end
 
         def failure_predicate
@@ -288,7 +314,12 @@ module ScraperWiki
 
       class ExtraKeysMatcher < KeysMatcher
         def difference
-          @actual['datasummary']['tables'][@table]['keys'] - @expected
+          keys = if @actual['datasummary']['tables'][@table]
+            @actual['datasummary']['tables'][@table]['keys']
+          else
+            []
+          end
+          keys - @expected
         end
 
         def failure_predicate
@@ -306,13 +337,21 @@ module ScraperWiki
       end
 
       class CountMatcher < TablesMatcher
+        def count
+          if @actual['datasummary']['tables'][@table]
+            @actual['datasummary']['tables'][@table]['count']
+          else
+            0
+          end
+        end
+
         def matches?(actual)
           super
-          actual['datasummary']['tables'][@table]['count'] == @expected
+          count == @expected
         end
 
         def failure_message
-          "expected #{@actual['short_name']} to have #{@expected} rows, not #{@actual['datasummary']['tables'][@table]['count']}"
+          "expected #{@actual['short_name']} to have #{@expected} rows, not #{count}"
         end
 
         def negative_failure_message
@@ -362,12 +401,16 @@ module ScraperWiki
           @items ||= if Array === @actual
             @actual
           elsif Hash === @actual
-            @actual['data'].map do |array|
-              hash = {}
-              @actual['keys'].each_with_index do |key,index|
-                hash[key] = array[index]
+            if @actual['data']
+              @actual['data'].map do |array|
+                hash = {}
+                @actual['keys'].each_with_index do |key,index|
+                  hash[key] = array[index]
+                end
+                hash
               end
-              hash
+            else
+              {}
             end
           else
             raise NotImplementerError, "Can only handle jsondict or jsonlist formats"
