@@ -28,7 +28,7 @@ describe ScraperWiki::API do
     it 'should respect the :version argument' do
       bare = @api.scraper_getinfo(EXAMPLE_SHORTNAME).first
       bare.should_not have_key('currcommit')
-      result = @api.scraper_getinfo(EXAMPLE_SHORTNAME, version: 1).first
+      result = @api.scraper_getinfo(EXAMPLE_SHORTNAME, :version => 1).first
       result.should have_key('currcommit')
       result['code'].should_not == bare['code']
     end
@@ -37,19 +37,19 @@ describe ScraperWiki::API do
       bare = @api.scraper_getinfo(EXAMPLE_SHORTNAME).first
       bare['history'].should have_at_least(2).items
       history_start_date = bare['history'][0]['date'][0..9]
-      result = @api.scraper_getinfo(EXAMPLE_SHORTNAME, history_start_date: history_start_date).first
+      result = @api.scraper_getinfo(EXAMPLE_SHORTNAME, :history_start_date => history_start_date).first
       result['history'].should have(1).item
     end
 
     it 'should respect the :quietfields argument (as an array)' do
-      result = @api.scraper_getinfo(EXAMPLE_SHORTNAME, quietfields: QUIETFIELDS).first
+      result = @api.scraper_getinfo(EXAMPLE_SHORTNAME, :quietfields => QUIETFIELDS).first
       QUIETFIELDS.each do |key|
         result.should_not have_key(key)
       end
     end
 
     it 'should respect the :quietfields argument (as an string)' do
-      result = @api.scraper_getinfo(EXAMPLE_SHORTNAME, quietfields: QUIETFIELDS.join('|')).first
+      result = @api.scraper_getinfo(EXAMPLE_SHORTNAME, :quietfields => QUIETFIELDS.join('|')).first
       QUIETFIELDS.each do |key|
         result.should_not have_key(key)
       end
@@ -68,7 +68,7 @@ describe ScraperWiki::API do
       runevents = @api.scraper_getinfo(EXAMPLE_SHORTNAME).first['runevents']
       bare = @api.scraper_getruninfo(EXAMPLE_SHORTNAME).first
       bare['runid'].should == runevents.first['runid']
-      response = @api.scraper_getruninfo(EXAMPLE_SHORTNAME, runid: runevents.last['runid']).first
+      response = @api.scraper_getruninfo(EXAMPLE_SHORTNAME, :runid => runevents.last['runid']).first
       response['runid'].should_not == bare['runid']
     end
   end
@@ -91,13 +91,13 @@ describe ScraperWiki::API do
     end
 
     it 'should respect the :searchquery argument' do
-      @api.scraper_search(searchquery: EXAMPLE_SHORTNAME).find{|result|
+      @api.scraper_search(:searchquery => EXAMPLE_SHORTNAME).find{|result|
         result['short_name'] == EXAMPLE_SHORTNAME
       }.should_not be_nil
     end
 
     it 'should respect the :maxrows argument' do
-      @api.scraper_search(maxrows: 1).should have(1).item
+      @api.scraper_search(:maxrows => 1).should have(1).item
     end
   end
 
@@ -110,25 +110,25 @@ describe ScraperWiki::API do
     end
 
     it 'should respect the :searchquery argument' do
-      @api.scraper_usersearch(searchquery: EXAMPLE_USERNAME).find{|result|
+      @api.scraper_usersearch(:searchquery => EXAMPLE_USERNAME).find{|result|
         result['username'] == EXAMPLE_USERNAME
       }.should_not be_nil
     end
 
     it 'should respect the :maxrows argument' do
-      @api.scraper_usersearch(maxrows: 1).should have(1).item
+      @api.scraper_usersearch(:maxrows => 1).should have(1).item
     end
 
     it 'should respect the :nolist argument (as an array)' do
       usernames = @api.scraper_usersearch.map{|result| result['username']}
-      @api.scraper_usersearch(nolist: usernames).find{|result|
+      @api.scraper_usersearch(:nolist => usernames).find{|result|
         usernames.include? result['username']
       }.should be_nil
     end
 
     it 'should respect the :nolist argument (as an string)' do
       usernames = @api.scraper_usersearch.map{|result| result['username']}
-      @api.scraper_usersearch(nolist: usernames.join(' ')).find{|result|
+      @api.scraper_usersearch(:nolist => usernames.join(' ')).find{|result|
         usernames.include? result['username']
       }.should be_nil
     end

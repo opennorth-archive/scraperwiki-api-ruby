@@ -8,11 +8,11 @@ module ScraperWiki
     base_uri 'api.scraperwiki.com/api/1.0'
 
     RUN_INTERVALS = {
-      never: -1,
-      monthly: 2678400,
-      weekly: 604800,
-      daily: 86400,
-      hourly: 3600,
+      :never   => -1,
+      :monthly => 2678400,
+      :weekly  => 604800,
+      :daily   => 86400,
+      :hourly  => 3600,
     }
 
     class << self
@@ -87,7 +87,7 @@ module ScraperWiki
       if Array === opts[:attach]
         opts[:attach] = opts[:attach].join ';'
       end
-      request_with_apikey '/datastore/sqlite', {name: shortname, query: query}.merge(opts)
+      request_with_apikey '/datastore/sqlite', {:name => shortname, :query => query}.merge(opts)
     end
 
     # Extracts data about a scraper's code, owner, history, etc.
@@ -199,7 +199,7 @@ module ScraperWiki
       if Array === opts[:quietfields]
         opts[:quietfields] = opts[:quietfields].join '|'
       end
-      request_with_apikey '/scraper/getinfo', {name: shortname}.merge(opts)
+      request_with_apikey '/scraper/getinfo', {:name => shortname}.merge(opts)
     end
 
     # See what the scraper did during each run.
@@ -235,7 +235,7 @@ module ScraperWiki
     # @note The query string parameter is +name+, not +shortname+
     #   {https://scraperwiki.com/docs/api#getinfo as in the ScraperWiki docs}
     def scraper_getruninfo(shortname, opts = {})
-      request_with_apikey '/scraper/getruninfo', {name: shortname}.merge(opts)
+      request_with_apikey '/scraper/getruninfo', {:name => shortname}.merge(opts)
     end
 
     # Find out information about a user.
@@ -271,7 +271,7 @@ module ScraperWiki
     # @note The date joined field is +date_joined+ (with underscore) on
     #   {#scraper_usersearch}
     def scraper_getuserinfo(username)
-      request_with_apikey '/scraper/getuserinfo', username: username
+      request_with_apikey '/scraper/getuserinfo', :username => username
     end
 
     # Search the titles and descriptions of all the scrapers.
@@ -341,7 +341,7 @@ module ScraperWiki
     end
 
     def request(path, opts)
-      self.class.get(path, query: opts).parsed_response
+      self.class.get(path, :query => opts).parsed_response
     end
   end
 end
