@@ -20,4 +20,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency('httparty', '~> 0.10.0')
   s.add_development_dependency('rspec', '~> 2.10')
   s.add_development_dependency('rake')
+  s.add_development_dependency('coveralls')
 end
