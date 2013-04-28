@@ -5,7 +5,7 @@ require 'time'
 # We don't want to test the ScraperWiki API. We just want to check that the
 # wrapper works.
 describe ScraperWiki::API do
-  EXAMPLE_SHORTNAME = 'frabcus.emailer'
+  EXAMPLE_SHORTNAME = 'tutorial-1'
   EXAMPLE_USERNAME = 'frabcus'
   QUIETFIELDS = %w(code runevents datasummary userroles history)
 
