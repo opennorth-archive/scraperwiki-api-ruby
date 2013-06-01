@@ -14,7 +14,7 @@ describe ScraperWiki::API do
   end
 
   describe '#datastore_sqlite' do
-    # @todo
+    pending
   end
 
   describe '#scraper_getinfo' do
